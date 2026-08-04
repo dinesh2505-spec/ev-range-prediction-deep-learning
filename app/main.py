@@ -8,6 +8,7 @@ from src.predictor import predict_range
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 # Create FastAPI instance
 app = FastAPI(
@@ -15,6 +16,13 @@ app = FastAPI(
     description="Predict EV driving range using ANN",
     version="1.0"
 )
+
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
+)
+
 
 templates = Jinja2Templates(directory="templates")
 

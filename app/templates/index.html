@@ -5,15 +5,19 @@
 <head>
 
     <meta charset="UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
         EV Range Prediction
     </title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 
 </head>
 
 
 <body>
+
+<div class="container">
 
 
 <h1>
@@ -26,6 +30,7 @@ Enter vehicle specifications to estimate driving range.
 
 
 <form method="post" action="/predict">
+    <div class="form-grid">
 
 
 <label>
@@ -143,11 +148,12 @@ Example: 250 km/h
 
 <br>
 
-
+</div>
 <button type="submit">
     Predict Range
 </button>
 
+</form>
 
 {% if prediction %}
 
@@ -158,5 +164,9 @@ Predicted Range:
 <h1>
 {{ prediction }} km
 </h1>
+
+<p>
+Generated using Artificial Neural Network model
+</p>
 
 {% endif %}
