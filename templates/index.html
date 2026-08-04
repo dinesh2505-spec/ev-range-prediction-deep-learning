@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        EV Range Prediction
+    </title>
+
+</head>
+
+
+<body>
+
+
+<h1>
+    EV Range Prediction System
+</h1>
+
+<p>
+Enter vehicle specifications to estimate driving range.
+</p>
+
+
+<form method="post" action="/predict">
+
+
+<label>
+    Battery Capacity (kWh)
+</label>
+
+<br>
+
+<input 
+type="number"
+name="battery_capacity_kWh"
+step="any"
+min="20"
+max="150"
+placeholder="Typical range: 40 - 120 kWh"
+required>
+
+<p>
+Example: 75 kWh
+</p>
+
+<br>
+
+
+
+<label>
+    Efficiency (Wh/km)
+</label>
+
+<br>
+
+<input 
+type="number"
+name="efficiency_wh_per_km"
+step="any"
+min="100"
+max="300"
+placeholder="Typical range: 140 - 250 Wh/km"
+required>
+
+<p>
+Lower values indicate better efficiency.
+</p>
+
+<br>
+
+
+
+<label>
+    Torque (Nm)
+</label>
+
+<br>
+
+<input 
+type="number"
+name="torque_nm"
+step="any"
+min="100"
+max="1500"
+placeholder="Typical range: 200 - 1000 Nm"
+required>
+
+<p>
+Example: 500 Nm
+</p>
+
+<br>
+
+
+
+<label>
+    Acceleration 0-100 km/h (seconds)
+</label>
+
+<br>
+
+<input 
+type="number"
+name="acceleration_0_100_s"
+step="any"
+min="2"
+max="15"
+placeholder="Typical range: 3 - 12 seconds"
+required>
+
+<p>
+Lower values mean faster acceleration.
+</p>
+
+<br>
+
+
+
+<label>
+    Top Speed (km/h)
+</label>
+
+<br>
+
+<input 
+type="number"
+name="top_speed_kmh"
+step="any"
+min="100"
+max="400"
+placeholder="Typical range: 120 - 350 km/h"
+required>
+
+
+<p>
+Example: 250 km/h
+</p>
+
+
+<br>
+
+
+<button type="submit">
+    Predict Range
+</button>
+
+
+{% if prediction %}
+
+<h2>
+Predicted Range:
+</h2>
+
+<h1>
+{{ prediction }} km
+</h1>
+
+{% endif %}
