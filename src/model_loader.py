@@ -15,7 +15,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Models directory
-MODELS_DIR = os.path.join(BASE_DIR, "Models")
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 
 # File paths

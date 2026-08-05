@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+
+  ev-range-api:
+
+    image: ev-range-prediction
+
+    container_name: ev-range-container
+
+    ports:
+      - "8000:8000"
+
+    restart: always
