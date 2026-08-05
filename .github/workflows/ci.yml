@@ -1,155 +1,74 @@
-name: EV Range Prediction CI/CD
+name: EV Range Prediction CD
+
 
 on:
   push:
     branches:
       - main
 
-  pull_request:
-    branches:
-      - main
-
-
-# Required for Google Workload Identity Federation
-permissions:
-  contents: read
-  id-token: write
-
 
 env:
-
-  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  REGION: ${{ vars.GCP_REGION }}
-
-  GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY }}
-  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
-
-  CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+  PROJECT_ID: project-29042adf-275b-46cc-a25
+  REGION: europe-west3
+  REPOSITORY: ev-range-images
+  IMAGE_NAME: ev-range-prediction
 
 
 jobs:
 
-  build-test-deploy:
+  deploy:
 
     runs-on: ubuntu-latest
 
 
+    permissions:
+      contents: read
+      id-token: write
+
+
     steps:
 
-
-      # -----------------------------------
-      # Step 1: Checkout code
-      # -----------------------------------
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
 
-
-      # -----------------------------------
-      # Step 2: Setup Python
-      # -----------------------------------
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+        service_account: github-actions@project-29042adf-275b-46cc-a25.iam.gserviceaccount.com
 
 
-
-      # -----------------------------------
-      # Step 3: Install dependencies
-      # -----------------------------------
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements-docker.txt
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
 
 
-
-      # -----------------------------------
-      # Step 4: Run tests
-      # -----------------------------------
-
-      - name: Run pytest
-        run: |
-          pytest
+    - name: Configure Docker
+      run: |
+        gcloud auth configure-docker europe-west3-docker.pkg.dev
 
 
+    - name: Build Docker Image
+      run: |
 
-      # -----------------------------------
-      # Step 5: Authenticate Google Cloud
-      # -----------------------------------
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-
-        with:
-
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        docker build \
+        -t europe-west3-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
 
+    - name: Push Docker Image
+      run: |
 
-      # -----------------------------------
-      # Step 6: Setup Google Cloud SDK
-      # -----------------------------------
-
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        docker push \
+        europe-west3-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
 
+    - name: Deploy to Cloud Run
+      run: |
 
-      # -----------------------------------
-      # Step 7: Configure Docker
-      # -----------------------------------
-
-      - name: Configure Docker authentication
-
-        run: |
-
-          gcloud auth configure-docker \
-          ${{ env.REGION }}-docker.pkg.dev
-
-
-
-      # -----------------------------------
-      # Step 8: Build Docker Image
-      # -----------------------------------
-
-      - name: Build Docker image
-
-        run: |
-
-          docker build \
-          -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-
-
-
-      # -----------------------------------
-      # Step 9: Push Image to Artifact Registry
-      # -----------------------------------
-
-      - name: Push Docker image
-
-        run: |
-
-          docker push \
-          ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-
-
-      # -----------------------------------
-      # Step 10: Deploy to Cloud Run
-      # -----------------------------------
-
-      - name: Deploy to Cloud Run
-
-        run: |
-
-          gcloud run deploy ${{ env.CLOUD_RUN_SERVICE }} \
-          --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-          --region ${{ env.REGION }} \
-          --platform managed \
-          --quiet
+        gcloud run deploy ev-range-prediction \
+        --image europe-west3-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+        --region ${{ env.REGION }} \
+        --platform managed \
+        --memory 2Gi \
+        --cpu 1 \
+        --allow-unauthenticated
