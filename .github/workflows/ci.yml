@@ -7,13 +7,6 @@ on:
       - main
 
 
-env:
-  PROJECT_ID: project-29042adf-275b-46cc-a25
-  REGION: europe-west3
-  REPOSITORY: ev-range-images
-  IMAGE_NAME: ev-range-prediction
-
-
 jobs:
 
   deploy:
@@ -28,47 +21,44 @@ jobs:
 
     steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
 
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-        service_account: github-actions@project-29042adf-275b-46cc-a25.iam.gserviceaccount.com
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/28863701301/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+
+          service_account: github-actions@project-29042adf-275b-46cc-a25.iam.gserviceaccount.com
 
 
-    - name: Setup Google Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
 
-    - name: Configure Docker
-      run: |
-        gcloud auth configure-docker europe-west3-docker.pkg.dev
+      - name: Configure Docker authentication
+        run: |
+          gcloud auth configure-docker europe-west3-docker.pkg.dev
 
 
-    - name: Build Docker Image
-      run: |
-
-        docker build \
-        -t europe-west3-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-
-
-    - name: Push Docker Image
-      run: |
-
-        docker push \
-        europe-west3-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      - name: Build Docker Image
+        run: |
+          docker build \
+          -t europe-west3-docker.pkg.dev/project-29042adf-275b-46cc-a25/ev-range-images/ev-range-prediction:${{ github.sha }} .
 
 
-    - name: Deploy to Cloud Run
-      run: |
+      - name: Push Docker Image
+        run: |
+          docker push europe-west3-docker.pkg.dev/project-29042adf-275b-46cc-a25/ev-range-images/ev-range-prediction:${{ github.sha }}
 
-        gcloud run deploy ev-range-prediction \
-        --image europe-west3-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-        --region ${{ env.REGION }} \
-        --platform managed \
-        --memory 2Gi \
-        --cpu 1 \
-        --allow-unauthenticated
+
+      - name: Deploy to Cloud Run
+        run: |
+
+          gcloud run deploy ev-range-prediction \
+          --image europe-west3-docker.pkg.dev/project-29042adf-275b-46cc-a25/ev-range-images/ev-range-prediction:${{ github.sha }} \
+          --region europe-west3 \
+          --platform managed \
+          --memory 2Gi \
+          --allow-unauthenticated
